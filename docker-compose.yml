@@ -1,0 +1,33 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: ./backend
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB=mcp_forge
+    ports:
+      - "8001:8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    ports:
+      - "5174:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo_data:
